@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 from app import helpers
 
 class TestHelpers(unittest.TestCase):
+    scraper = cloudscraper.create_scraper()
 
     def test_fetch_model_avatar(self):
-        scraper = cloudscraper.create_scraper()
         link_works = [
             'https://jable.tv/models/yua-mikami/',
             'https://jable.tv/models/shinoda-yuu/',
@@ -16,7 +16,7 @@ class TestHelpers(unittest.TestCase):
         ]
 
         for link in link_works:
-            avatar = helpers.fetch_model_avatar(scraper, link)
+            avatar = helpers.fetch_model_avatar(self.scraper, link)
             self.assertNotEqual(
                 avatar,
                 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
@@ -29,7 +29,7 @@ class TestHelpers(unittest.TestCase):
         ]
 
         for link in link_not_works:
-            avatar = helpers.fetch_model_avatar(scraper, link)
+            avatar = helpers.fetch_model_avatar(self.scraper, link)
             self.assertEqual(
                 avatar,
                 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
@@ -37,9 +37,8 @@ class TestHelpers(unittest.TestCase):
     # <-- End of test_fetch_model_avatar()
 
     def test_get_tags(self):
-        scraper = cloudscraper.create_scraper()
         response = BeautifulSoup(
-            scraper.get('https://jable.tv/videos/ssis-233/').content,
+            self.scraper.get('https://jable.tv/videos/ssis-233/').content,
             'lxml'
         )
         tags = helpers.get_tags(response)
@@ -49,7 +48,7 @@ class TestHelpers(unittest.TestCase):
         )
         
         response = BeautifulSoup(
-            scraper.get('https://jable.tv/videos/ssis-204/').content,
+            self.scraper.get('https://jable.tv/videos/ssis-204/').content,
             'lxml'
         )
         tags = helpers.get_tags(response)
@@ -59,7 +58,23 @@ class TestHelpers(unittest.TestCase):
         )
     # <-- End of test_get_tags()
 
-
+    def test_get_videos(self):
+        response = BeautifulSoup(
+            self.scraper.get('https://jable.tv/models/arina-hashimoto/').content,
+            'lxml'
+        )
+        video = helpers.get_videos(
+            scraper=self.scraper,
+            response=response,
+            model='橋本有菜',
+            limit=1
+        )[0]
+        
+        self.assertEqual(video['model'], '橋本有菜')
+        self.assertEqual(video['id'], 'FSDSS-335')
+        self.assertEqual(video['name'], '【要照我說的那樣尿哦】橋本有菜 超快感JOI！ ASMR小惡魔的射精輔助 橋本有菜')
+        self.assertEqual(video['link'], 'https://jable.tv/videos/fsdss-335/')
+    # <-- End of test_get_video()
 
 
 if __name__ == '__main__':
