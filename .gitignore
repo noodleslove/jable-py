@@ -9,3 +9,5 @@ __pycache__
 *.ipynb
 # database
 db.json
+# others
+.DS_Store
