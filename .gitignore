@@ -1,0 +1,11 @@
+# virtural machine directory
+.venv/
+# personal secret data
+secrets.py
+# python cache
+__pycache__
+# jupyter notebook
+.ipynb_checkpoints
+*.ipynb
+# database
+db.json
