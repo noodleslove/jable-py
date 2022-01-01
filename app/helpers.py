@@ -1,21 +1,51 @@
+import random
+import smtplib
 import datetime
+from types import NoneType
 from bs4 import BeautifulSoup
+from tinydb import TinyDB
 from cloudscraper import CloudScraper
+from email.message import EmailMessage
 
-def fetch_model_avatar(scraper: CloudScraper, model_url: str) -> str:
-    # Fetch url page content
-    response = BeautifulSoup(scraper.get(model_url).content, 'lxml')
+# Local packages
+from .secrets import email, app_pw
+from .constants import default_subjects, default_models
 
-    try: # Try to fetch avatar img source
-        html = response.find('img', {'class': 'avatar'})
+# -------------------------------------
+# Web scraping helper functions
+# -------------------------------------
+
+def fetch_model_avatar(response: BeautifulSoup) -> str:
+    """Scrape model avatar image data
+
+    Args:
+        response (BeautifulSoup): Webpage of the model
+
+    Returns:
+        str: Model avatar image source
+    """
+    html = response.find('img', {'class': 'avatar'})
+    avatar = 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
+
+    if type(html) == NoneType: # When theres no avatar
+        return avatar
+    elif html.has_attr('src'): # When it has src attribute
         avatar = html['src']
-    except TypeError: # Use a placeholder if theres no avatar
-        avatar = 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
+    elif html.has_attr('data-cfsrc'): # When it has data-cfsrc attribute
+        avatar = html['data-cfsrc']
 
     return avatar
-
+# <-- End of fetch_model_avatar()
 
 def get_tags(response: BeautifulSoup) -> list[str]:
+    """Scrape tags for a video
+
+    Args:
+        response (BeautifulSoup): Webpage of the video
+
+    Returns:
+        list[str]: Tags for this video
+    """
     tags = list()
     html = response.find('h5', {'class': 'tags h6-md'})
 
@@ -24,8 +54,17 @@ def get_tags(response: BeautifulSoup) -> list[str]:
         tags.append(tag.contents[0])
 
     return tags
+# <-- End of get_tags()
 
 def get_date(response: BeautifulSoup) -> datetime:
+    """Scrape upload date of a video
+
+    Args:
+        response (BeautifulSoup): Webpage of the video
+
+    Returns:
+        datetime: Upload time of this video
+    """
     now = datetime.datetime.now()
     raw_time = response \
         .find('span', {'class': 'mr-3'}) \
@@ -48,16 +87,29 @@ def get_date(response: BeautifulSoup) -> datetime:
         upload_time = now
 
     return upload_time
+# <-- End of get_date()
 
 def get_videos(
     scraper: CloudScraper,
     response: BeautifulSoup,
-    model: str
+    model: str,
+    limit: int=0
 ) -> list[dict[str, str]]:
+    """Scrape videos data on jable.tv
+
+    Args:
+        scraper (CloudScraper): Scraper engine
+        response (BeautifulSoup): Webpage content of the model
+        model (str): Name of the model
+        limit (int, optional): Number of videos to scrape. Defaults to 0.
+
+    Returns:
+        list[dict[str, str]]: [description]
+    """
     content = list()
     
     # Loop through model page
-    for html in response.find_all('div', {'class': 'col-6 col-sm-4 col-lg-3'}):
+    for html in response.find_all('div', {'class': 'col-6 col-sm-4 col-lg-3'}, limit=limit):
         video = dict()
         
         # Add model name to video
@@ -106,4 +158,65 @@ def get_videos(
         content.append(video)
 
     return content
+# <-- End of get_videos()
 
+# -------------------------------------
+# Email helper functions
+# -------------------------------------
+
+def send_email(recipients: list[str], body: str) -> None:
+    """Send email with given body to given recipients
+
+    Args:
+        recipients (list[str]): List of recipients' email address
+        body (str): Body of the email
+    """
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+    server.login(email, app_pw)
+
+    message = EmailMessage()
+    message['From'] = email
+    message['To'] = ', '.join(recipients)
+    message['Subject'] = random.choice(default_subjects)
+    message.set_content(body, subtype='html')
+
+    server.send_message(message)
+
+    server.quit()
+# <-- End of send_mail()
+
+# -------------------------------------
+# Database helper functions
+# -------------------------------------
+
+def read_models(db_path: str, table: str) -> dict[str, str]:
+    """Read all models from database model table, and load to buffer
+
+    Args:
+        db_path (str): Path to database
+        table (str): Name of models table
+
+    Returns:
+        dict[str, str]: A dictionary of models info, [key]: model name, 
+        [value]: link to model webpage
+    """
+    models = dict()
+    db = TinyDB(db_path).table(table)
+
+    if len(db) == 0:
+        return default_models
+
+    # Loop through all models in database
+    for model in db.all():
+        name = model['model']
+        link = model['link']
+
+        # Add model to buffer
+        models[name] = link
+
+    return models
+# <-- End of read_models()
