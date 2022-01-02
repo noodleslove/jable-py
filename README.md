@@ -92,7 +92,7 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 
 ### Built With
 
-* [Python 3](https://python.org/)
+* [Python3](https://python.org/)
 * [TinyDB](https://tinydb.readthedocs.io/en/latest/)
 * [CloudScraper](https://github.com/VeNoMouS/cloudscraper)
 
@@ -108,10 +108,10 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
+All the required python packages are listed in `requirements.txt`. To install all of the project dependencies, you can simply run the following command.
+* pip
   ```sh
-  npm install npm@latest -g
+  pip install -r requirements.txt
   ```
 
 ### Installation
@@ -148,10 +148,11 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- ROADMAP -->
 ## Roadmap
 
-- [] Feature 1
-- [] Feature 2
-- [] Feature 3
-    - [] Nested Feature
+- [x] Jable.tv webscraping
+- [x] Email automation
+- [x] Database storage
+- [ ] Personalize model list 
+    - [ ] Nested Feature
 
 See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
 
