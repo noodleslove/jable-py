@@ -1,14 +1,11 @@
 import os
 import time
 import random
-import smtplib
 import cloudscraper
 from . import helpers
 from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
-from .secrets import email, app_pw
-from .constants import default_subjects, default_models
-from email.message import EmailMessage
+from .secrets import email
 
 
 class Scraper:
@@ -16,67 +13,31 @@ class Scraper:
     def __init__(self) -> None:
         """Constructor for Scraper
         """
-        # Initialize variables
+        # Set random seed
+        random.seed(time.time())
+        
+        # Initialize webscraping engine
         self.scraper = cloudscraper.create_scraper()
+        
+        # Data paths
         self._data_path: str = os.path.normpath( # Set path to data directory
             os.path.join(os.path.dirname(__file__), '../data/')
         )
         self._db_path: str = os.path.join(self._data_path, 'db.json')
-        self.subjects: list[str] = default_subjects
 
-        # Check if database has any data
-        db = TinyDB(self._db_path).table('models')
-
-        if len(db) == 0:
-            self.models: dict[str, str] = default_models
-            self.fetch_models()
-        else:
-            self.read_models()
+        # Load model buffer
+        self.models = helpers.read_models(self._db_path, 'models')
     # <-- End of __init__()
 
-    def read_models(self) -> None:
-        """Read all models from database model table, and load to buffer
-        """
-        self.models = dict()
-        db = TinyDB(self._db_path).table('models')
 
-        # Loop through all models in database
-        for model in db.all():
-            name = model['model']
-            link = model['link']
-
-            # Add model to class buffer
-            self.models[name] = link
-    # <-- End of read_models()
-
-    def add_model(self, model: tuple[str, str]) -> bool:
+    def add_model(self, model: str, url: str) -> None:
         """Add a model to database models table
 
         Args:
-            model (tuple[str, str]): Model information, [0]: model name 
-            [1]: link to model page
-
-        Returns:
-            bool: True if add model successfully, False otherwise
+            model (str): Model name 
+            url (str): Link to model page
         """
-        flag = False
-        db = TinyDB(self._db_path).table('models')
-        query = Query()
-
-        if not db.contains(query['model'] == model[0]):
-            flag = True
-            
-            # Construct database document object
-            model_info = dict()
-            model_info['model'] = model[0]
-            model_info['link'] = model[1]
-            model_info['avatar'] = self.fetch_avatar(model[1])
-
-            # Save to database and buffer
-            db.insert(model_info)
-            self.models[model[0]] = model[1]
-
-        return flag
+        self.models[model] = url
     # <-- End of add_model()
 
     def remove_model(self, model_name: str) -> bool:
@@ -96,150 +57,65 @@ class Scraper:
         if db.contains(query):
             flag = True
             db.remove(query) # If so remove it
+        
+        # Check if buffer contains model
+        if model_name in self.models:
+            flag = True
             self.models.pop(model_name)
 
         return flag
-
-    def fetch_avatar(self, url: str) -> str:
-        """Fetch avatar image source
-
-        Args:
-            url (str): Link to the model page
-
-        Returns:
-            str: Model avatar image source
-        """
-        # Fetch website data
-        response = BeautifulSoup(self.scraper.get(url).content, 'lxml')
-
-        try: # Try to fetch avatar img source
-            html = response.find('img', {'class': 'avatar'})
-            avatar = html['src']
-        except TypeError: # Use a placeholder if theres no avatar
-            avatar = 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
-
-        return avatar
-    # <-- End of fetch_avatar()
 
     def fetch_models(self) -> bool:
         models = list()
         # Loop through all models and scrape
         for model, url in self.models.items():
             model_info = dict()
+            response = BeautifulSoup(self.scraper.get(url), 'lxml')
 
             model_info['model'] = model
-            model_info['avatar'] = self.fetch_avatar(url)
+            model_info['avatar'] = helpers.fetch_model_avatar(response)
 
             models.append(model_info)
 
-        return self.insert_models_db(
+        return helpers.insert_models_db(
             TinyDB(os.path.join(self._data_path, 'db.json')).table('models'),
             models
         )
     # <-- End of fetch_models()
 
 
-    def fetch_videos(self) -> bool:
-        """Fetch and parse data
-
-        Returns:
-            bool: True if new data was found, False otherwise
+    def fetch(self) -> None:
+        """Fetch, parse and save data
         """
         # Set content to an empty list
         content = list()
-        
+
+        models_db = TinyDB(self._db_path).table('models')
+        videos_db = TinyDB(self._db_path).table('videos')
+
         # Loop through all models and scrape
         for model, url in self.models.items():
-            # Fetch website data
+            # Fetch webpage data
             response = BeautifulSoup(self.scraper.get(url).content, 'lxml')
+            # Update model avatar
+            avatar = helpers.fetch_model_avatar(response)
+            if not helpers.db_insert_model(models_db, model, url, avatar):
+                # When model already exists in database check if it needs 
+                # to update avatar
+                helpers.db_update_model(models_db, model, avatar)
             # Append data to content list
             content.extend(
                 helpers.get_videos(self.scraper, response, model)
             )
 
-        # Save new data to database when finish
-        return self.insert_videos_db(
-            # save to `videos` table
-            TinyDB(os.path.join(self._data_path, 'db.json')).table('videos'),
-            content
-        )
-    # <-- End of fetch_videos()
-
-
-    def insert_models_db(self, db: TinyDB, content: list[dict[str, str]]) -> bool:
-        """Insert all newly fetch data to database
-
-        Args:
-            db (TinyDB): Database object for saving fetch data
-            content (list[dict[str, str]]): Content to be inserted
-
-        Returns:
-            bool: True if theres new model inserted, False otherwise
-        """
-        # Set flag
-        flag = False
-
-        # Set query
-        query = Query()
-
-        # Loop through all models
-        for model in content:
-            # Insert model to database
-            if not db.contains(query['model'] == model):
-                flag = True
-                db.insert(model)
-        
-        return flag
-    # <-- End of insert_models_db()
-
-
-    def insert_videos_db(self, db: TinyDB, content: list[dict]) -> bool:
-        """Insert only new data to database
-
-        Args:
-            db (TinyDB): The database object for saving data
-
-        Returns:
-            bool: True if there's new data save to database, False
-            otherwise
-        """
-        # Set flag
-        flag = False
-
-        # Set query
-        query = Query()
-
-        # Loop through all videos of a model
-        for video in content:
-            # Query database to get video with same id and link
-            video_query = query.fragment({
-                'id': video['id'],
-                'link': video['link']
-            })
-            
-            # Check if query result is not zero
-            is_video_exist = len(db.search(video_query)) > 0
-            
-            # Check if video already exist in database
-            if not is_video_exist:
-                flag = True
-                # If not exist insert to database
-                db.insert(video)
-            else:
-                db.update({'views': video['views']}, video_query)
-
-        return flag
-    # <-- End of insert_new_only_db()
+        helpers.db_insert_videos(videos_db, content)
 
 
     def format_daily_email(self) -> str:
-        # Set random seed
-        random.seed(time.time())
-
         # Load email templates
-        with open(os.path.join(self._data_path, 'email_main.html'), 'r') as file:
+        with open(os.path.join(self._data_path, 'daily_email_content.html'), 'r') as file:
             template = file.read()
-        with open(os.path.join(self._data_path, 'email.html'), 'r') as file:
+        with open(os.path.join(self._data_path, 'daily_email.html'), 'r') as file:
             body = file.read()
 
         # Get a random video
@@ -262,9 +138,11 @@ class Scraper:
             # Suggest model 1
             suggested_model_1=models[0]['model'],
             avatar_1=models[0]['avatar'],
+            suggested_model_link_1=models[0]['link'],
             # Suggest model 2
             suggested_model_2=models[1]['model'],
-            avatar_2=models[1]['avatar']
+            avatar_2=models[1]['avatar'],
+            suggested_model_link_2=models[1]['link']
         )
 
         body = body.replace('{% content %}', template)
@@ -321,29 +199,10 @@ class Scraper:
     # <-- End of format_weekly_email()
 
 
-    def send_email(self, body: str, recipients: list[str]) -> None:
-        """Send email with latest video data
-
-        Args:
-            body (str): The body of email
-            recipients (list[str]): The list of recipients for this email
+    def send_daily_email(self) -> None:
+        """Send daily email to recipients with random recommend video
         """
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(email, app_pw)
-        
-        message = EmailMessage()
-        message['From'] = email
-        message['To'] = ', '.join(recipients)
-        message['Subject'] = random.choice(self.subjects)
-        body = self.format_email()
-        message.set_content(body, subtype='html')
-        
-        server.send_message(message)
-        
-        server.quit()
+        body = self.format_daily_email()
+        helpers.send_email([email], body) # DEBUG
     # <-- End of send_email()
 # <-- End of class Scraper
