@@ -3,13 +3,13 @@ import smtplib
 import datetime
 from types import NoneType
 from bs4 import BeautifulSoup
-from tinydb import TinyDB
+from tinydb import TinyDB, Query
 from cloudscraper import CloudScraper
 from email.message import EmailMessage
 
 # Local packages
 from .secrets import email, app_pw
-from .constants import default_subjects, default_models
+from .constants import default_subjects, default_models, default_avatar
 
 # -------------------------------------
 # Web scraping helper functions
@@ -25,7 +25,7 @@ def fetch_model_avatar(response: BeautifulSoup) -> str:
         str: Model avatar image source
     """
     html = response.find('img', {'class': 'avatar'})
-    avatar = 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
+    avatar = default_avatar
 
     if type(html) == NoneType: # When theres no avatar
         return avatar
@@ -70,14 +70,14 @@ def get_date(response: BeautifulSoup) -> datetime:
         .find('span', {'class': 'mr-3'}) \
         .contents[0].split(' ')
 
-    x = raw_time[0]
+    x = int(raw_time[0])
     _type = raw_time[1]
 
     if _type == '小時前':
         upload_time = now - datetime.timedelta(hours=x)
     elif _type == '天前':
         upload_time = now - datetime.timedelta(days=x)
-    elif _type == '個星期前':
+    elif _type == '星期前':
         upload_time = now - datetime.timedelta(weeks=x)
     elif _type == '個月前':
         upload_time = now - datetime.timedelta(days=x*30)
@@ -86,7 +86,7 @@ def get_date(response: BeautifulSoup) -> datetime:
     else:
         upload_time = now
 
-    return upload_time
+    return upload_time.strftime('%m/%d/%Y')
 # <-- End of get_date()
 
 def get_videos(
@@ -208,6 +208,8 @@ def read_models(db_path: str, table: str) -> dict[str, str]:
     db = TinyDB(db_path).table(table)
 
     if len(db) == 0:
+        for model, url in default_models.items():
+            db_insert_model(db, model, url)
         return default_models
 
     # Loop through all models in database
@@ -220,3 +222,84 @@ def read_models(db_path: str, table: str) -> dict[str, str]:
 
     return models
 # <-- End of read_models()
+
+def db_insert_model(
+    db: TinyDB,
+    model: str,
+    link: str,
+    avatar: str=default_avatar
+) -> bool:
+    flag = False
+    query = Query()
+
+    if not db.contains(query['model'] == model):
+        flag = True
+
+        # Structure document object
+        doc = dict()
+        doc['model'] = model
+        doc['link'] = link
+        doc['avatar'] = avatar
+
+        db.insert(doc)
+
+    return flag
+# <-- End of db_insert_model()
+
+def db_update_model(
+    db: TinyDB,
+    model: str,
+    avatar: str=default_avatar
+) -> bool:
+    flag = False
+    query = Query()['model'] == model
+
+    doc = db.search(query)[0]
+    if (not doc['avatar'] == avatar) and (not avatar == default_avatar):
+        flag = True
+        # When avatar is not default avatar and they are different
+        db.update({'avatar': avatar}, query)
+
+    return flag
+# <-- End of db_update_model()
+
+def db_insert_videos(
+    db: TinyDB,
+    content: list[dict]
+) -> bool:
+    """Insert only new data to database
+
+    Args:
+        db (TinyDB): The database object for saving data
+
+    Returns:
+        bool: True if there's new data save to database, False
+        otherwise
+    """
+    # Set flag
+    flag = False
+
+    # Set query
+    query = Query()
+
+    # Loop through all videos of a model
+    for video in content:
+        # Query database to get video with same id and link
+        video_query = query.fragment({
+            'id': video['id'],
+            'link': video['link']
+        })
+        
+        # Check if query result is not zero
+        is_video_exist = len(db.search(video_query)) > 0
+        
+        # Check if video already exist in database
+        if not is_video_exist:
+            flag = True
+            # If not exist insert to database
+            db.insert(video)
+        else:
+            db.update({'views': video['views']}, video_query)
+
+    return flag
+# <-- End of insert_new_only_db()
