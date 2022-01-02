@@ -2,10 +2,13 @@ import os
 import time
 import random
 import cloudscraper
-from . import helpers
 from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
+
+# Local packages
+from . import helpers
 from .secrets import email
+from .constants import default_subjects
 
 
 class Scraper:
@@ -138,10 +141,12 @@ class Scraper:
             # Suggest model 1
             suggested_model_1=models[0]['model'],
             avatar_1=models[0]['avatar'],
+            punchline_1=random.choice(default_subjects),
             suggested_model_link_1=models[0]['link'],
             # Suggest model 2
             suggested_model_2=models[1]['model'],
             avatar_2=models[1]['avatar'],
+            punchline_2=random.choice(default_subjects),
             suggested_model_link_2=models[1]['link']
         )
 
