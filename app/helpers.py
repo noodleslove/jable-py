@@ -229,6 +229,17 @@ def db_insert_model(
     link: str,
     avatar: str=default_avatar
 ) -> bool:
+    """Insert model to database
+
+    Args:
+        db (TinyDB): Model database
+        model (str): Model name
+        link (str): Url of model webpage
+        avatar (str, optional): Avatar image source. Defaults to default_avatar.
+
+    Returns:
+        bool: True if it inserted model, False otherwise
+    """
     flag = False
     query = Query()
 
@@ -251,6 +262,16 @@ def db_update_model(
     model: str,
     avatar: str=default_avatar
 ) -> bool:
+    """Update model avatar
+
+    Args:
+        db (TinyDB): Models database
+        model (str): Model name
+        avatar (str, optional): Avatar image source. Defaults to default_avatar.
+
+    Returns:
+        bool: True if it updated avatar, False otherwise
+    """
     flag = False
     query = Query()['model'] == model
 
@@ -303,3 +324,10 @@ def db_insert_videos(
 
     return flag
 # <-- End of insert_new_only_db()
+
+def db_cleanup(db: TinyDB, models: dict[str, str]) -> None:
+    query = Query()
+    
+    # Remove all videos of model not in models buffer
+    db.remove(query['model'].test(lambda x: x not in models))
+# <-- End of db_cleanup()
