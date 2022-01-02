@@ -15,3 +15,5 @@ default_models = {
     '相澤南': 'https://jable.tv/models/aizawa-minami/',
     '桃乃木香奈': 'https://jable.tv/models/momonogi-kana/'
 }
+
+default_avatar = 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
