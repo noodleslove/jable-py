@@ -2,6 +2,7 @@ import os
 import time
 import random
 import cloudscraper
+import numpy as np
 from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
 
@@ -69,7 +70,7 @@ class Scraper:
         return flag
 
     def fetch_models(self) -> bool:
-        models = list()
+        models = np.array([])
         # Loop through all models and scrape
         for model, url in self.models.items():
             model_info = dict()
@@ -78,7 +79,7 @@ class Scraper:
             model_info['model'] = model
             model_info['avatar'] = helpers.fetch_model_avatar(response)
 
-            models.append(model_info)
+            models = np.append(models, models.append(model_info))
 
         return helpers.insert_models_db(
             TinyDB(os.path.join(self._data_path, 'db.json')).table('models'),
@@ -91,7 +92,7 @@ class Scraper:
         """Fetch, parse and save data
         """
         # Set content to an empty list
-        content = list()
+        content = np.array([])
 
         models_db = TinyDB(self._db_path).table('models')
         videos_db = TinyDB(self._db_path).table('videos')
@@ -107,7 +108,8 @@ class Scraper:
                 # to update avatar
                 helpers.db_update_model(models_db, model, avatar)
             # Append data to content list
-            content.extend(
+            content = np.append(
+                content,
                 helpers.get_videos(self.scraper, response, model)
             )
 

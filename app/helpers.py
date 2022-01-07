@@ -1,6 +1,7 @@
 import random
 import smtplib
 import datetime
+import numpy as np
 from types import NoneType
 from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
@@ -46,12 +47,12 @@ def get_tags(response: BeautifulSoup) -> list[str]:
     Returns:
         list[str]: Tags for this video
     """
-    tags = list()
+    tags = np.array([])
     html = response.find('h5', {'class': 'tags h6-md'})
 
     # Loop through every tag
     for tag in html.find_all('a'):
-        tags.append(tag.contents[0])
+        tags = np.append(tags, tag.contents[0])
 
     return tags
 # <-- End of get_tags()
@@ -106,7 +107,7 @@ def get_videos(
     Returns:
         list[dict[str, str]]: [description]
     """
-    content = list()
+    content = np.array([])
     
     # Loop through model page
     for html in response.find_all('div', {'class': 'col-6 col-sm-4 col-lg-3'}, limit=limit):
@@ -155,7 +156,7 @@ def get_videos(
             video['subtitle'] = False
         
         # Add video to model content
-        content.append(video)
+        content = np.append(content, video)
 
     return content
 # <-- End of get_videos()
