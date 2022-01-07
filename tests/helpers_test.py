@@ -16,7 +16,8 @@ class TestHelpers(unittest.TestCase):
         ]
 
         for link in link_works:
-            avatar = helpers.fetch_model_avatar(self.scraper, link)
+            soup = BeautifulSoup(self.scraper.get(link).content, 'lxml')
+            avatar = helpers.fetch_model_avatar(soup)
             self.assertNotEqual(
                 avatar,
                 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
@@ -29,7 +30,8 @@ class TestHelpers(unittest.TestCase):
         ]
 
         for link in link_not_works:
-            avatar = helpers.fetch_model_avatar(self.scraper, link)
+            soup = BeautifulSoup(self.scraper.get(link).content, 'lxml')
+            avatar = helpers.fetch_model_avatar(soup)
             self.assertEqual(
                 avatar,
                 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
