@@ -1,5 +1,5 @@
 from app.scraper import Scraper
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     s = Scraper()
-    s.format_weekly_email()
+    s.send_weekly_email()
