@@ -93,7 +93,7 @@ class Scraper:
                 content, helpers.get_videos(self.scraper, response, model)
             )
 
-        helpers.db_insert_videos(videos_db, content)
+        helpers.db_insert_videos(videos_db, content.tolist())
 
     # <-- End of fetch()
 

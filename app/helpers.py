@@ -2,7 +2,6 @@ import random
 import smtplib
 import datetime
 import numpy as np
-from types import NoneType
 from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
 from cloudscraper import CloudScraper
@@ -29,7 +28,7 @@ def fetch_model_avatar(response: BeautifulSoup) -> str:
     html = response.find("img", {"class": "avatar"})
     avatar = default_avatar
 
-    if type(html) == NoneType:  # When theres no avatar
+    if type(html) == type(None):  # When theres no avatar
         return avatar
     elif html.has_attr("src"):  # When it has src attribute
         avatar = html["src"]
@@ -58,7 +57,7 @@ def get_tags(response: BeautifulSoup) -> list[str]:
     for tag in html.find_all("a"):
         tags = np.append(tags, tag.contents[0])
 
-    return tags
+    return tags.tolist()
 
 
 # <-- End of get_tags()
@@ -112,7 +111,7 @@ def get_videos(
     Returns:
         list[dict[str, str]]: [description]
     """
-    content = np.array([])
+    content = list()
 
     # Loop through model page
     for html in response.find_all(
@@ -163,7 +162,7 @@ def get_videos(
             video["subtitle"] = False
 
         # Add video to model content
-        content = np.append(content, video)
+        content.append(video)
 
     return content
 
