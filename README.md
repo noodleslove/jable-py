@@ -114,20 +114,31 @@ All the required python packages are listed in `requirements.txt`. To install al
   pip install -r requirements.txt
   ```
 
-### Installation
+### Setup
 
-1. Get a free API Key at [https://example.com](https://example.com)
+1. Make sure `Python3`, `Crontab` are installed in your machine.
 2. Clone the repo
    ```sh
-   git clone https://github.com/github_username/repo_name.git
+   git clone https://github.com/noodleslove/jable_py.git
    ```
-3. Install NPM packages
+3. Create a new virtual environment for application, and install prerequisites as above.
+   ```python
+   python -m venv .venv
+   ```
+4. Setup crontab to automate email notification
    ```sh
-   npm install
+   crontab -e
    ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
+   Pase follow commands at the bottom of the file
+   ```sh
+   # jable_py video data fetch automation
+   25 11 * * 1-5 /home/{user}/jable_py/.venv/bin/python3 /home/{user}/jable_py/fetch_runner.py
+
+   # jable_py daily email automation
+   30 11 * * 1-5 /home/{user}/jable_py/.venv/bin/python3 /home/{user}/jable_py/daily_email_runner.py
+
+   # jable_py weekly email automation
+   30 11 * * 6 /home/{user}/jable_py/.venv/bin/python3 /home/{user}/jable_py/weekly_email_runner.py
    ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
