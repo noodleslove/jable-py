@@ -207,5 +207,9 @@ class Scraper:
 
     # <-- End of send_email()
 
+    def send_weekly_email(self) -> None:
+        body = self.format_weekly_email()
+        helpers.send_email([email], body)  # DEBUG
+
 
 # <-- End of class Scraper
