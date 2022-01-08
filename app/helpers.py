@@ -354,7 +354,11 @@ def db_select_videos(db: TinyDB, models: list[str]) -> list[dict]:
 
     for model in models:
         model_videos = np.array(db.search(query.model == model))
+
+        # format videos
         convert_timestamp(model_videos)
+        format_video_names(model_videos)
+
         model_videos = np.array(
             sorted(model_videos, key=lambda v: v["upload time"], reverse=True)
         )
@@ -374,3 +378,13 @@ def convert_timestamp(videos: list[dict]) -> None:
 
 
 # <-- End of convert_timestamp()
+
+
+def format_video_names(videos: list[dict]) -> None:
+    for video in videos:
+        video["name"] = (
+            video["name"] if len(video["name"]) < 30 else video["name"][:27] + "..."
+        )
+
+
+# <-- End of format_video_names()
