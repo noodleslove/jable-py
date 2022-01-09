@@ -8,7 +8,7 @@ from tinydb import TinyDB, Query
 
 # Local packages
 from . import helpers
-from .secrets import email
+from .secrets import recipients
 from .constants import default_subjects
 
 
@@ -203,13 +203,13 @@ class Scraper:
     def send_daily_email(self) -> None:
         """Send daily email to recipients with random recommend video"""
         body = self.format_daily_email()
-        helpers.send_email([email], body)  # DEBUG
+        helpers.send_email(recipients, body)  # DEBUG
 
     # <-- End of send_email()
 
     def send_weekly_email(self) -> None:
         body = self.format_weekly_email()
-        helpers.send_email([email], body)  # DEBUG
+        helpers.send_email(recipients, body)  # DEBUG
 
 
 # <-- End of class Scraper
