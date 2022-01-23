@@ -36,8 +36,6 @@ def fetch_model_avatar(response: BeautifulSoup) -> str:
         avatar = html["data-cfsrc"]
 
     return avatar
-
-
 # <-- End of fetch_model_avatar()
 
 
@@ -58,8 +56,6 @@ def get_tags(response: BeautifulSoup) -> list[str]:
         tags = np.append(tags, tag.contents[0])
 
     return tags.tolist()
-
-
 # <-- End of get_tags()
 
 
@@ -92,8 +88,6 @@ def get_date(response: BeautifulSoup) -> datetime:
         upload_time = now
 
     return upload_time.strftime("%m/%d/%Y")
-
-
 # <-- End of get_date()
 
 
@@ -165,8 +159,6 @@ def get_videos(
         content.append(video)
 
     return content
-
-
 # <-- End of get_videos()
 
 # -------------------------------------
@@ -197,8 +189,6 @@ def send_email(recipients: list[str], body: str) -> None:
     server.send_message(message)
 
     server.quit()
-
-
 # <-- End of send_mail()
 
 # -------------------------------------
@@ -234,8 +224,6 @@ def read_models(db_path: str, table: str) -> dict[str, str]:
         models[name] = link
 
     return models
-
-
 # <-- End of read_models()
 
 
@@ -268,8 +256,6 @@ def db_insert_model(
         db.insert(doc)
 
     return flag
-
-
 # <-- End of db_insert_model()
 
 
@@ -294,8 +280,6 @@ def db_update_model(db: TinyDB, model: str, avatar: str = default_avatar) -> boo
         db.update({"avatar": avatar}, query)
 
     return flag
-
-
 # <-- End of db_update_model()
 
 
@@ -332,8 +316,6 @@ def db_insert_videos(db: TinyDB, content: list[dict]) -> bool:
             db.update({"views": video["views"]}, video_query)
 
     return flag
-
-
 # <-- End of insert_new_only_db()
 
 
@@ -342,8 +324,6 @@ def db_cleanup(db: TinyDB, models: dict[str, str]) -> None:
 
     # Remove all videos of model not in models buffer
     db.remove(query["model"].test(lambda x: x not in models))
-
-
 # <-- End of db_cleanup()
 
 
@@ -364,8 +344,6 @@ def db_select_videos(db: TinyDB, models: list[str]) -> list[dict]:
         videos = np.append(videos, model_videos[:2])
 
     return videos
-
-
 # <-- End of db_select_videos()
 
 
@@ -374,16 +352,15 @@ def convert_timestamp(videos: list[dict]) -> None:
         video["upload time"] = datetime.datetime.strptime(
             video["upload time"], "%m/%d/%Y"
         )
-
-
 # <-- End of convert_timestamp()
 
 
 def format_video_names(videos: list[dict]) -> None:
+    CHAR_LIMIT = 30
+    CHAR_LIMIT_WITH_DOT = CHAR_LIMIT - 3
     for video in videos:
         video["name"] = (
-            video["name"] if len(video["name"]) < 30 else video["name"][:27] + "..."
+            video["name"] if len(video["name"]) < CHAR_LIMIT else
+            video["name"][:CHAR_LIMIT_WITH_DOT] + "..."
         )
-
-
 # <-- End of format_video_names()
