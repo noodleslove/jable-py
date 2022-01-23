@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
 
 # Local packages
-from . import helpers
+from . import helpers, database_helpers
 from .secrets import recipients
 from .constants import default_subjects
 
@@ -29,7 +29,6 @@ class Scraper:
 
         # Load model buffer
         self.models = helpers.read_models(self._db_path, "models")
-
     # <-- End of __init__()
 
     def add_model(self, model: str, url: str) -> None:
@@ -40,7 +39,6 @@ class Scraper:
             url (str): Link to model page
         """
         self.models[model] = url
-
     # <-- End of add_model()
 
     def remove_model(self, model_name: str) -> bool:
@@ -67,7 +65,6 @@ class Scraper:
             self.models.pop(model_name)
 
         return flag
-
     # <-- End of remove_model()
 
     def fetch(self) -> None:
@@ -84,17 +81,16 @@ class Scraper:
             response = BeautifulSoup(self.scraper.get(url).content, "lxml")
             # Update model avatar
             avatar = helpers.fetch_model_avatar(response)
-            if not helpers.db_insert_model(models_db, model, url, avatar):
+            if not database_helpers.db_insert_model(models_db, model, url, avatar):
                 # When model already exists in database check if it needs
                 # to update avatar
-                helpers.db_update_model(models_db, model, avatar)
+                database_helpers.db_update_model(models_db, model, avatar)
             # Append data to content list
             content = np.append(
                 content, helpers.get_videos(self.scraper, response, model)
             )
 
-        helpers.db_insert_videos(videos_db, content.tolist())
-
+        database_helpers.db_insert_videos(videos_db, content.tolist())
     # <-- End of fetch()
 
     def format_daily_email(self) -> str:
@@ -141,7 +137,6 @@ class Scraper:
             file.write(body)
 
         return body
-
     # <-- End of format_daily_email()
 
     def format_weekly_email(self) -> str:
@@ -164,7 +159,8 @@ class Scraper:
 
         htmls = np.array([])
         videos_db = TinyDB(self._db_path).table("videos")
-        videos = helpers.db_select_videos(videos_db, self.models.keys())
+        videos = database_helpers.db_select_videos(
+            videos_db, self.models.keys())
 
         # Loop through data in a step of 2
         for idx in np.arange(1, len(videos), 2):
@@ -197,19 +193,17 @@ class Scraper:
             body = body.replace("{% content %}", "\n".join(htmls))
 
         return body
-
     # <-- End of format_weekly_email()
 
     def send_daily_email(self) -> None:
         """Send daily email to recipients with random recommend video"""
         body = self.format_daily_email()
         helpers.send_email(recipients, body)  # DEBUG
-
-    # <-- End of send_email()
+    # <-- End of send_daily_email()
 
     def send_weekly_email(self) -> None:
         body = self.format_weekly_email()
         helpers.send_email(recipients, body)  # DEBUG
-
+    # <-- End of send_weekly_email()
 
 # <-- End of class Scraper
