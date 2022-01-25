@@ -37,7 +37,6 @@ class TestHelpers(unittest.TestCase):
                 avatar,
                 "https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png",
             )
-
     # <-- End of test_fetch_model_avatar()
 
     def test_get_tags(self):
@@ -75,9 +74,9 @@ class TestHelpers(unittest.TestCase):
         )
         tags = helpers.get_tags(response)
         self.assertEqual(
-            tags, ["主奴調教", "角色劇情", "少女", "巨乳", "顏射", "短髮", "出軌", "痴女", "調教"]
+            tags, ["主奴調教", "角色劇情", "少女", "巨乳", "顏射", "短髮", "出軌",
+                   "痴女", "調教"]
         )
-
     # <-- End of test_get_tags()
 
     def test_get_videos(self):
@@ -96,8 +95,9 @@ class TestHelpers(unittest.TestCase):
             "【要照我說的那樣尿哦】橋本有菜 超快感JOI！ ASMR小惡魔的射精輔助 橋本有菜"
         )
         self.assertEqual(video["link"], "https://jable.tv/videos/fsdss-335/")
-
     # <-- End of test_get_video()
+
+# <-- End of TestHelpers
 
 
 if __name__ == "__main__":

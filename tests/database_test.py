@@ -63,10 +63,37 @@ class TestDatabaseHelpers(unittest.TestCase):
 
         self.assertTrue(db.contains(Query()['model'] == 'model1'))
         self.assertTrue(db.contains(Query()['model'] == 'model2'))
-        self.assertTrue(db.contains(Query()['avatar'] == 'avatar1'))
+        self.assertTrue(db.contains(Query()['avatar'] == 'avatar2'))
 
         self.assertFalse(db.contains(Query()['model'] == 'model3'))
-        self.assertFalse(db.contains(Query()['avatar'] == 'avatar2'))
+        self.assertFalse(db.contains(Query()['avatar'] == 'avatar1'))
     # <-- End of test_db_insert_model()
+
+    def test_db_cleanup(self):
+        db = TinyDB(self.path).table('videos')
+        test = [
+            {'id': 1, 'name': 'video1', 'model': 'model1',
+                'link': 'link1', 'views': 0},
+            {'id': 2, 'name': 'video2', 'model': 'model2',
+                'link': 'link2', 'views': 0},
+            {'id': 3, 'name': 'video3', 'model': 'model3',
+                'link': 'link3', 'views': 0},
+            {'id': 4, 'name': 'video4', 'model': 'model4',
+                'link': 'link4', 'views': 0}
+        ]
+
+        db.truncate()
+        self.assertTrue(db_insert_videos(db, test))
+
+        db_cleanup(db, {'model1': '', 'model2': '', 'model3': ''})
+        self.assertTrue(db.contains(Query()['model'] == 'model1'))
+        self.assertFalse(db.contains(Query()['model'] == 'model4'))
+        self.assertEqual(len(db), 3)
+
+        db_cleanup(db, {})
+        self.assertFalse(db.contains(Query()['model'] == 'model2'))
+        self.assertFalse(db.contains(Query()['model'] == 'model3'))
+        self.assertEqual(len(db), 0)
+    # <-- End of test_db_cleanup()
 
 # <-- End of TestDatabaseHelpers
