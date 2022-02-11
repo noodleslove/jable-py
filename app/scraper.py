@@ -7,9 +7,9 @@ from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
 
 # Local packages
-from . import helpers, database_helpers
+from . import helpers as h, database_helpers as db_h, automation_helpers as auto_h
 from .secrets import recipients
-from .constants import default_subjects
+from .constants import default_subjects, weekly_command, daily_command
 
 
 class Scraper:
@@ -22,13 +22,19 @@ class Scraper:
         self.scraper = cloudscraper.create_scraper()
 
         # Data paths
+        self._runner_path = os.path.normpath(  # Set path to project directory
+            os.path.join(os.path.dirname(__file__), "../")
+        )
         self._data_path: str = os.path.normpath(  # Set path to data directory
             os.path.join(os.path.dirname(__file__), "../data/")
         )
         self._db_path: str = os.path.join(self._data_path, "db.json")
 
         # Load model buffer
-        self.models = helpers.read_models(self._db_path, "models")
+        self.models = db_h.read_models(self._db_path, "models")
+
+        # Load Scheduler class
+        self.schedule = auto_h.Scheduler()
     # <-- End of __init__()
 
     def add_model(self, model: str, url: str) -> None:
@@ -80,17 +86,17 @@ class Scraper:
             # Fetch webpage data
             response = BeautifulSoup(self.scraper.get(url).content, "lxml")
             # Update model avatar
-            avatar = helpers.fetch_model_avatar(response)
-            if not database_helpers.db_insert_model(models_db, model, url, avatar):
+            avatar = h.fetch_model_avatar(response)
+            if not db_h.db_insert_model(models_db, model, url, avatar):
                 # When model already exists in database check if it needs
                 # to update avatar
-                database_helpers.db_update_model(models_db, model, avatar)
+                db_h.db_update_model(models_db, model, avatar)
             # Append data to content list
             content = np.append(
-                content, helpers.get_videos(self.scraper, response, model)
+                content, h.get_videos(self.scraper, response, model)
             )
 
-        database_helpers.db_insert_videos(videos_db, content.tolist())
+        db_h.db_insert_videos(videos_db, content.tolist())
     # <-- End of fetch()
 
     def format_daily_email(self) -> str:
@@ -159,7 +165,7 @@ class Scraper:
 
         htmls = np.array([])
         videos_db = TinyDB(self._db_path).table("videos")
-        videos = database_helpers.db_select_videos(
+        videos = db_h.db_select_videos(
             videos_db, self.models.keys())
 
         # Loop through data in a step of 2
@@ -198,12 +204,33 @@ class Scraper:
     def send_daily_email(self) -> None:
         """Send daily email to recipients with random recommend video"""
         body = self.format_daily_email()
-        helpers.send_email(recipients, body)  # DEBUG
+        h.send_email(recipients, body)  # DEBUG
     # <-- End of send_daily_email()
 
     def send_weekly_email(self) -> None:
         body = self.format_weekly_email()
-        helpers.send_email(recipients, body)  # DEBUG
+        h.send_email(recipients, body)  # DEBUG
     # <-- End of send_weekly_email()
+
+    def add_schedule(
+        self,
+        email: str,
+        template: str = 'weekly',
+        minute: int = 0,
+        hour: int = 0,
+        dow: list[str] = None
+    ) -> None:
+        db = TinyDB(self._db_path).table("schedules")
+        db_h.db_insert_schedule(db, email, minute, hour, dow)
+
+        # IN PROGRESS: check this!!!
+
+        if template in ('--daily', '-d'):
+            template = daily_command
+        else:
+            template = weekly_command
+
+        self.schedule.add_job(template, email, minute, hour, dow)
+    # <-- End of add_schedule()
 
 # <-- End of class Scraper

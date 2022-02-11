@@ -17,3 +17,6 @@ default_models = {
 }
 
 default_avatar = 'https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png'
+
+weekly_command = '{workspace}/.venv/bin/python3 {workspace}/runner.py send -w -- {emails}'
+daily_command = '{workspace}/.venv/bin/python3 {workspace}/runner.py send -d -- {emails}'

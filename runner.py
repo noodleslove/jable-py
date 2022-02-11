@@ -6,6 +6,7 @@ if __name__ == "__main__":
         sys.exit()
 
     s = Scraper()
+    print(s._runner_path)
     if sys.argv[1] == "fetch" and len(sys.argv) == 2:
         try:
             print("* fetching...")
@@ -14,6 +15,7 @@ if __name__ == "__main__":
             sys.exit("Unknown fetch error!")
 
     elif sys.argv[1] == "send" and len(sys.argv) == 3:
+        # IN PROGRESS: check this!!!
         try:
             if sys.argv[2] == "-d" or sys.argv[2] == "--daily":
                 print("* sending daily email...")
