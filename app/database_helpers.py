@@ -176,18 +176,22 @@ def db_select_videos(db: TinyDB, models: list[str]) -> list[dict]:
 # <-- End of db_select_videos()
 
 
-def insert_email(emails):
-    def transform(doc):
-        doc.append()
-
-
 def db_insert_schedule(
     db: TinyDB,
     email: str,
     minute: int,
     hour: int,
     dow: list[str]
-):
+) -> None:
+    """Insert email schedule record into database.
+
+    Args:
+        db (TinyDB): Schedule database
+        email (str): Email address
+        minute (int): At which minute email to be sent
+        hour (int): At which hour email to be sent
+        dow (list[str]): At which day of the week email to be sent
+    """
     query = Query().fragment({'minute': minute, 'hour': hour, 'dow': dow})
 
     if not db.contains(query):
@@ -195,3 +199,20 @@ def db_insert_schedule(
                   'hour': hour, 'dow': dow})
     else:
         db.update(lambda x: x['emails'].append(email), query)
+# <-- End of db_insert_schedule()
+
+
+def db_remove_schedule(db: TinyDB, email: str) -> None:
+    """Remove all jobs of the specified email from the database
+
+    Args:
+        db (TinyDB): Schedule database
+        email (str): Email address to be removed
+    """
+    query = Query()['emails'].test(lambda x: email in x)
+
+    db.update(lambda x: x['emails'].remove(email), query)
+
+    query = Query()['emails'].test(lambda x: len(x) == 0)
+    db.remove(query)
+# <-- End of db_remove_schedule()
