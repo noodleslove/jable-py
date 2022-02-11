@@ -6,12 +6,17 @@ from app.database_helpers import *
 
 
 class TestDatabaseHelpers(unittest.TestCase):
-    path = os.path.join(os.path.dirname(__file__), 'test_db.json')
+    def __init__(self, *args, **kwargs):
+        super(TestDatabaseHelpers, self).__init__(*args, **kwargs)
+        self.db = TinyDB(os.path.join(
+            os.path.dirname(__file__), 'test_db.json'))
+
+    def __del__(self):
+        self.db.close()
 
     def test_db_insert_schedule(self):
-        db = TinyDB(self.path).table('schedules')
-        if len(db) > 0:
-            db.truncate()
+        db = self.db.table('schedules')
+        db.truncate()
 
         db_insert_schedule(db, 'email1', 0, 0, ['MON'])
         self.assertEqual(len(db), 1)
@@ -27,10 +32,35 @@ class TestDatabaseHelpers(unittest.TestCase):
         self.assertEqual(result[0]['emails'], ['email1', 'email2'])
     # <-- End of test_db_insert_schedule()
 
+    def test_db_remove_schedule(self):
+        db = self.db.table('schedules')
+        db.truncate()
+
+        db_insert_schedule(db, 'email1', 0, 0, ['MON'])
+        self.assertEqual(len(db), 1)
+
+        db_remove_schedule(db, 'email1')
+        self.assertEqual(len(db), 0)
+
+        db_insert_schedule(db, 'email1', 0, 0, ['MON'])
+        db_insert_schedule(db, 'email2', 0, 0, ['MON'])
+        db_insert_schedule(db, 'email3', 0, 0, ['MON'])
+        self.assertEqual(len(db), 1)
+
+        db_remove_schedule(db, 'email3')
+        self.assertEqual(len(db), 1)
+
+        q = Query().fragment({'minute': 0, 'hour': 0, 'dow': ['MON']})
+        self.assertTrue(db.contains(q))
+
+        result = db.search(q)
+        self.assertTrue(len(result) > 0)
+        self.assertEqual(result[0]['emails'], ['email1', 'email2'])
+    # <-- End of test_db_remove_schedule()
+
     def test_db_insert_video(self):
-        db = TinyDB(self.path).table('videos')
-        if len(db) > 0:
-            db.truncate()
+        db = self.db.table('schedules')
+        db.truncate()
 
         test1 = [
             {'id': 1, 'name': 'video1', 'link': 'link1', 'views': 0},
@@ -52,9 +82,8 @@ class TestDatabaseHelpers(unittest.TestCase):
     # <-- End of test_db_insert_video()
 
     def test_db_insert_model(self):
-        db = TinyDB(self.path).table('models')
-        if len(db) > 0:
-            db.truncate()
+        db = self.db.table('models')
+        db.truncate()
 
         self.assertTrue(db_insert_model(db, 'model1', 'link1'))
         self.assertTrue(db_insert_model(db, 'model2', 'link2', 'avatar2'))
@@ -70,7 +99,7 @@ class TestDatabaseHelpers(unittest.TestCase):
     # <-- End of test_db_insert_model()
 
     def test_db_cleanup(self):
-        db = TinyDB(self.path).table('videos')
+        db = self.db.table('videos')
         test = [
             {'id': 1, 'name': 'video1', 'model': 'model1',
                 'link': 'link1', 'views': 0},
