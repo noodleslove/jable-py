@@ -6,7 +6,6 @@ if __name__ == "__main__":
         sys.exit()
 
     s = Scraper()
-    print(s._runner_path)
     if sys.argv[1] == "fetch" and len(sys.argv) == 2:
         try:
             print("* fetching...")
@@ -14,15 +13,17 @@ if __name__ == "__main__":
         except:
             sys.exit("Unknown fetch error!")
 
-    elif sys.argv[1] == "send" and len(sys.argv) == 3:
+    elif sys.argv[1] == "send" and len(sys.argv) >= 5:
         # IN PROGRESS: check this!!!
+
+        print(sys.argv[1:])
         try:
-            if sys.argv[2] == "-d" or sys.argv[2] == "--daily":
+            if (sys.argv[2] == "-d" or sys.argv[2] == "--daily") and sys.argv[3] == '--':
                 print("* sending daily email...")
-                s.send_daily_email()
-            elif sys.argv[2] == "-w" or sys.argv[2] == "--weekly":
+                s.send_daily_email(sys.argv[4:])
+            elif (sys.argv[2] == "-w" or sys.argv[2] == "--weekly") and sys.argv[3] == '--':
                 print("* sending weekly email...")
-                s.send_weekly_email()
+                s.send_weekly_email(sys.argv[4:])
             else:
                 sys.exit("Invalid arugment for send command.")
         except:
