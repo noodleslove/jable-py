@@ -9,7 +9,9 @@ __pycache__
 *.ipynb
 # database
 db.json
+# tests
 test_db.json
+test_jobs.tab
 # others
 .DS_Store
 .vscode/
