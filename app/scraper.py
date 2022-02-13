@@ -8,7 +8,6 @@ from tinydb import TinyDB, Query
 
 # Local packages
 from . import helpers as h, database_helpers as db_h, automation_helpers as auto_h
-from .secrets import recipients
 from .constants import default_subjects, weekly_command, daily_command
 
 
@@ -201,13 +200,13 @@ class Scraper:
         return body
     # <-- End of format_weekly_email()
 
-    def send_daily_email(self) -> None:
+    def send_daily_email(self, *recipients) -> None:
         """Send daily email to recipients with random recommend video"""
         body = self.format_daily_email()
         h.send_email(recipients, body)  # DEBUG
     # <-- End of send_daily_email()
 
-    def send_weekly_email(self) -> None:
+    def send_weekly_email(self, *recipients) -> None:
         body = self.format_weekly_email()
         h.send_email(recipients, body)  # DEBUG
     # <-- End of send_weekly_email()
@@ -215,22 +214,26 @@ class Scraper:
     def add_schedule(
         self,
         email: str,
-        template: str = 'weekly',
+        template: str = '-w',
         minute: int = 0,
         hour: int = 0,
         dow: list[str] = None
     ) -> None:
         db = TinyDB(self._db_path).table("schedules")
         db_h.db_insert_schedule(db, email, minute, hour, dow)
-
+        query = Query().fragment({'minute': minute, 'hour': hour, 'dow': dow})
+        comment = db.get(query).doc_id
+        emails = db.get(query)['emails']
         # IN PROGRESS: check this!!!
 
-        if template in ('--daily', '-d'):
-            template = daily_command
-        else:
-            template = weekly_command
+        command = daily_command if template in (
+            '--daily', '-d') else weekly_command
+        command.format(workspace=self._runner_path, emails=' '.join(emails))
 
-        self.schedule.add_job(template, email, minute, hour, dow)
+        self.schedule.remove_job(comment)
+        self.schedule.add_job(
+            ommand=command, comment=comment,
+            minute=minute, hour=hour, dow=dow)
     # <-- End of add_schedule()
 
 # <-- End of class Scraper

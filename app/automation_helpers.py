@@ -3,8 +3,9 @@ from crontab import CronTab
 
 class Scheduler:
 
-    def __init__(self):
-        self.cron = CronTab(user=True)
+    def __init__(self, file_name):
+        self.cron = CronTab(tab=file_name)
+        self.file_name = file_name
     # <-- End of __init__()
 
     def add_job(
@@ -37,7 +38,8 @@ class Scheduler:
         else:
             job.every().dows()
 
-        self.cron.write()
+        # self.cron.write(user=True)
+        self.cron.write(self.file_name)
     # <-- End of add_job()
 
     def remove_job(self, comment: str):
@@ -47,7 +49,8 @@ class Scheduler:
             comment (str): The email address to remove
         """
         self.cron.remove_all(comment=comment)
-        self.cron.write()
+        # self.cron.write(user=True)
+        self.cron.write(self.file_name)
     # <-- End of remove_job()
 
     def list_all_job(self):
