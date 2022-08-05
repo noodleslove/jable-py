@@ -109,50 +109,35 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-Python3.9 or above is required.
-
-All the required python packages are listed in `requirements.txt`. To install all of the project dependencies, you can simply run the following command.
-* pip
-  ```sh
-  pip install -r requirements.txt
-  ```
+Docker is required.
 
 ### Setup
 
-1. Make sure `Python3`, `Crontab` are installed in your machine.
-2. Clone the repo
+1. Make sure `Docker` is installed in your machine.
+2. Clone the repo.
    ```sh
    git clone https://github.com/noodleslove/jable_py.git
    ```
-3. Create a new virtual environment for application, and install prerequisites as above.
-   ```python
-   python3 -m venv .venv
-   ```
-4. Setup crontab to automate email notification
-   ```sh
-   crontab -e
-   ```
-   Paste following commands at the bottom of the file
-   ```sh
-   # jable_py video data fetch automation
-   25 11 * * 1-5 /home/{user}/jable_py/.venv/bin/python3 /home/{user}/jable_py/fetch_runner.py
-
-   # jable_py daily email automation
-   30 11 * * 1-5 /home/{user}/jable_py/.venv/bin/python3 /home/{user}/jable_py/daily_email_runner.py
-
-   # jable_py weekly email automation
-   30 11 * * 6 /home/{user}/jable_py/.venv/bin/python3 /home/{user}/jable_py/weekly_email_runner.py
-   ```
-5. Setup personal `credentials` for gmail account, and `recipients` for email notification.
-   Create `secrets.py` in app directory
+3. Setup personal `credentials` for gmail account, and `recipients` for email 
+   notification.
+   Create `secrets.py` in app directory.
    ```sh
    touch jable_py/app/secrets.py
    ```
-   Setup following variables to make the application work
+   Setup following variables to make the application work.
    ```python
    email = {sender-email}
    app_pw = {gmail-app-password}
    recipients = {list-of-recipients}
+   ```
+4. Open up a terminal and run the following command start up your application.
+   ```sh
+   docker compose up
+   ```
+5. If you want to run your services in the background, you can run the
+   following command instead.
+   ```sh
+   docker compose up -d
    ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -179,12 +164,16 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [x] Model list personalization
   - [x] Add model to database
   - [x] Remove model from database
-- [ ] Command line arugements
-  - [ ] Fetch
-  - [ ] Send email
-  - [ ] Add model
-  - [ ] Remove model
-  - [ ] List all models
+- [x] Command line arugements
+  - [x] Fetch
+  - [x] Send email
+  - [x] Add model
+  - [x] Remove model
+  - [x] List all models
+- [x] Dockerize the repository
+  - [x] Dockerfile
+  - [x] docker compose file
+  - [x] docker ignore file
 - [ ] Personalized email time
   - [ ] Nested Feature
 
