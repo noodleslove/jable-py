@@ -139,6 +139,10 @@ Docker is required.
    ```sh
    docker compose up -d
    ```
+   If you started Compose with `docker compose up -d`, you can stop your services once you’ve finished with them.
+   ```sh
+   docker compose stop
+   ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
