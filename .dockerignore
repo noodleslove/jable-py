@@ -1,0 +1,16 @@
+# ignore .git .cache and .vscode folders
+.git
+.cache
+.vscode
+
+# ignore all markdown files
+*.md
+
+# ignore tests folder
+tests
+
+# ignore pyhton cache folders
+__pycache__
+
+# ignore local dev files
+docker-compose.yml
