@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM python:3.10-slim-buster
 
 RUN apt-get update && apt-get -y install cron vim
