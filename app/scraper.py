@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
 
 # Local packages
-from . import helpers as h, database_helpers as db_h, automation_helpers as auto_h
+from . import helpers as h, database_helpers as db_h
+from .secrets import recipients
 from .constants import default_subjects, weekly_command, daily_command
 
 
@@ -33,7 +34,7 @@ class Scraper:
         self.models = db_h.read_models(self._db_path, "models")
 
         # Load Scheduler class
-        self.schedule = auto_h.Scheduler()
+        # self.schedule = auto_h.Scheduler()
     # <-- End of __init__()
 
     def add_model(self, model: str, url: str) -> None:
@@ -200,15 +201,15 @@ class Scraper:
         return body
     # <-- End of format_weekly_email()
 
-    def send_daily_email(self, *recipients) -> None:
+    def send_daily_email(self) -> None:
         """Send daily email to recipients with random recommend video"""
         body = self.format_daily_email()
-        h.send_email(recipients, body)  # DEBUG
+        h.send_email(recipients, body)
     # <-- End of send_daily_email()
 
-    def send_weekly_email(self, *recipients) -> None:
+    def send_weekly_email(self) -> None:
         body = self.format_weekly_email()
-        h.send_email(recipients, body)  # DEBUG
+        h.send_email(recipients, body)
     # <-- End of send_weekly_email()
 
     def add_schedule(
