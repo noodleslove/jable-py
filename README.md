@@ -30,7 +30,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/github_username/repo_name">
-    <img src="data/logo.png" alt="Logo" width="80" height="80">
+    <img src="data/logo.png" alt="Logo" width="192" height="70">
   </a>
 
 <h3 align="center">Jable.tv Python Scraper</h3>
