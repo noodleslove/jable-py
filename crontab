@@ -1,0 +1,7 @@
+# START CRON JOB
+0 0 * * * python /jable-py/daily_email_runner.py
+
+0 0 * * 0 python /jable-py/weekly_email_runner.py
+
+0 23 * * * python /jable-py/fetcher_runner.py
+# END CRON JOB
