@@ -27,7 +27,7 @@ def fetch_model_avatar(response: BeautifulSoup) -> str:
     html = response.find("img", {"class": "avatar"})
     avatar = default_avatar
 
-    if type(html) == type(None):  # When theres no avatar
+    if html is None:  # When theres no avatar
         return avatar
     elif html.has_attr("src"):  # When it has src attribute
         avatar = html["src"]
