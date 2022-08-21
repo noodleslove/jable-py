@@ -1,3 +1,4 @@
+import os
 import random
 import smtplib
 import datetime
@@ -7,7 +8,6 @@ from cloudscraper import CloudScraper
 from email.message import EmailMessage
 
 # Local packages
-from .secrets import email, app_pw
 from .constants import default_subjects, default_avatar
 
 # -------------------------------------
@@ -172,15 +172,17 @@ def send_email(recipients: list[str], body: str) -> None:
         recipients (list[str]): List of recipients' email address
         body (str): Body of the email
     """
+    gmail = os.getenv('gmail')
+    app_pw = os.getenv('app_password')
     server = smtplib.SMTP("smtp.gmail.com", 587)
 
     server.ehlo()
     server.starttls()
     server.ehlo()
-    server.login(email, app_pw)
+    server.login(gmail, app_pw)
 
     message = EmailMessage()
-    message["From"] = email
+    message["From"] = gmail
     message["To"] = ", ".join(recipients)
     message["Subject"] = random.choice(default_subjects)
     message.set_content(body, subtype="html")

@@ -1,5 +1,4 @@
 import datetime
-import pytest
 from cloudscraper import create_scraper
 from bs4 import BeautifulSoup
 
@@ -26,10 +25,10 @@ class TestHelpers():
         for link in link_works:
             response = self.scraper.get(link)
             assert response.status_code == 200
-            
+
             soup = BeautifulSoup(response.content, "lxml")
             assert isinstance(soup, BeautifulSoup)
-            
+
             avatar = fetch_model_avatar(soup)
             assert avatar != self.default_avatar
 
@@ -42,7 +41,7 @@ class TestHelpers():
         for link in link_not_works:
             response = self.scraper.get(link)
             assert response.status_code == 200
-            
+
             soup = BeautifulSoup(response.content, "lxml")
             assert isinstance(soup, BeautifulSoup)
 
@@ -74,7 +73,7 @@ class TestHelpers():
         date = get_date(soup)
         assert isinstance(date, str)
         datetime.datetime.strptime(date, '%m/%d/%Y')
-        
+
         tags = get_tags(soup)
         assert isinstance(tags, list) and \
             all(isinstance(tag, str) for tag in tags)
