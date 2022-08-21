@@ -82,13 +82,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
-
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email`, `email_client`, `project_title`, `project_description`
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
+<!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->,
 
 ### Built With
 
@@ -113,32 +107,39 @@ Docker is required.
 
 ### Setup
 
-1. Make sure `Docker` is installed in your machine.
+1. Make sure `Docker` is installed in your machine. You can download the latest   
+   version from the [Docker](https://docker.com/) website.
+
 2. Clone the repo.
    ```sh
    git clone https://github.com/noodleslove/jable_py.git
    ```
+
 3. Setup personal `credentials` for gmail account, and `recipients` for email 
    notification.
    Create `secrets.py` in app directory.
    ```sh
    touch jable_py/app/secrets.py
    ```
+
    Setup following variables to make the application work.
    ```python
    email = {sender-email}
    app_pw = {gmail-app-password}
    recipients = {list-of-recipients}
    ```
+
 4. Open up a terminal and run the following command start up your application.
    ```sh
    docker compose up
    ```
+
 5. If you want to run your services in the background, you can run the
    following command instead.
    ```sh
    docker compose up -d
    ```
+
    If you started Compose with `docker compose up -d`, you can stop your services once you’ve finished with them.
    ```sh
    docker compose stop
