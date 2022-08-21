@@ -1,28 +1,37 @@
-import unittest
-import cloudscraper
+import datetime
+import pytest
+from cloudscraper import create_scraper
 from bs4 import BeautifulSoup
 
-from app import helpers
+from app.helpers import (
+    get_date,
+    get_tags,
+    get_videos,
+    fetch_model_avatar
+)
 
 
-class TestHelpers(unittest.TestCase):
-    scraper = cloudscraper.create_scraper()
+class TestHelpers():
+    scraper = create_scraper()
+    default_avatar = "https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png"
 
     def test_fetch_model_avatar(self):
         link_works = [
-            "https://jable.tv/models/yua-mikami/",
+            "https://jable.tv/models/yua-mikami//",
             "https://jable.tv/models/shinoda-yuu/",
             "https://jable.tv/models/aizawa-minami/",
             "https://jable.tv/models/momonogi-kana/",
         ]
 
         for link in link_works:
-            soup = BeautifulSoup(self.scraper.get(link).content, "lxml")
-            avatar = helpers.fetch_model_avatar(soup)
-            self.assertNotEqual(
-                avatar,
-                "https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png",
-            )
+            response = self.scraper.get(link)
+            assert response.status_code == 200
+            
+            soup = BeautifulSoup(response.content, "lxml")
+            assert isinstance(soup, BeautifulSoup)
+            
+            avatar = fetch_model_avatar(soup)
+            assert avatar != self.default_avatar
 
         link_not_works = [
             "https://jable.tv/models/kaede-karen/",
@@ -31,74 +40,64 @@ class TestHelpers(unittest.TestCase):
         ]
 
         for link in link_not_works:
-            soup = BeautifulSoup(self.scraper.get(link).content, "lxml")
-            avatar = helpers.fetch_model_avatar(soup)
-            self.assertEqual(
-                avatar,
-                "https://raw.githubusercontent.com/konsav/email-templates/master/images/list-item.png",
-            )
+            response = self.scraper.get(link)
+            assert response.status_code == 200
+            
+            soup = BeautifulSoup(response.content, "lxml")
+            assert isinstance(soup, BeautifulSoup)
+
+            avatar = fetch_model_avatar(soup)
+            assert avatar == self.default_avatar
     # <-- End of test_fetch_model_avatar()
 
     def test_get_tags(self):
-        response = BeautifulSoup(
-            self.scraper.get(
-                "https://jable.tv/videos/ssis-233/").content, "lxml"
-        )
-        tags = helpers.get_tags(response)
-        self.assertEqual(
-            tags,
-            [
-                "主奴調教",
-                "制服誘惑",
-                "角色劇情",
-                "少女",
-                "巨乳",
-                "短髮",
-                "絲襪",
-                "黑絲",
-                "調教",
-                "潮吹",
-                "凌辱",
-                "NTR",
-                "美腿",
-                "OL",
-                "錄像",
-                "廁所",
-                "偷拍",
-            ],
-        )
+        response = self.scraper.get("https://jable.tv/videos/ssis-233/")
+        assert response.status_code == 200
 
-        response = BeautifulSoup(
-            self.scraper.get(
-                "https://jable.tv/videos/ssis-204/").content, "lxml"
-        )
-        tags = helpers.get_tags(response)
-        self.assertEqual(
-            tags, ["主奴調教", "角色劇情", "少女", "巨乳", "顏射", "短髮", "出軌",
-                   "痴女", "調教"]
-        )
+        soup = BeautifulSoup(response.content, 'lxml')
+        assert isinstance(soup, BeautifulSoup)
+
+        date = get_date(soup)
+        assert isinstance(date, str)
+        datetime.datetime.strptime(date, '%m/%d/%Y')
+
+        tags = get_tags(soup)
+        assert isinstance(tags, list) and \
+            all(isinstance(tag, str) for tag in tags)
+
+        response = self.scraper.get("https://jable.tv/videos/ssis-204/")
+        assert response.status_code == 200
+
+        soup = BeautifulSoup(response.content, 'lxml')
+        assert isinstance(soup, BeautifulSoup)
+
+        date = get_date(soup)
+        assert isinstance(date, str)
+        datetime.datetime.strptime(date, '%m/%d/%Y')
+        
+        tags = get_tags(soup)
+        assert isinstance(tags, list) and \
+            all(isinstance(tag, str) for tag in tags)
     # <-- End of test_get_tags()
 
     def test_get_videos(self):
-        response = BeautifulSoup(
-            self.scraper.get(
-                "https://jable.tv/models/arina-hashimoto/").content, "lxml"
-        )
-        video = helpers.get_videos(
-            scraper=self.scraper, response=response, model="橋本有菜", limit=1
-        )[0]
+        response = self.scraper.get("https://jable.tv/videos/ssis-233/")
+        assert response.status_code == 200
 
-        self.assertEqual(video["model"], "橋本有菜")
-        self.assertEqual(video["id"], "FSDSS-335")
-        self.assertEqual(
-            video["name"],
-            "【要照我說的那樣尿哦】橋本有菜 超快感JOI！ ASMR小惡魔的射精輔助 橋本有菜"
-        )
-        self.assertEqual(video["link"], "https://jable.tv/videos/fsdss-335/")
+        soup = BeautifulSoup(response.content, 'lxml')
+        assert isinstance(soup, BeautifulSoup)
+
+        videos = get_videos(self.scraper, soup, model="橋本有菜", limit=5)
+        assert isinstance(videos, list) and \
+            all(isinstance(video, dict) for video in videos) and \
+            all(video.get('model') is not None for video in videos) and \
+            all(video.get('id') is not None for video in videos) and \
+            all(video.get('name') is not None for video in videos) and \
+            all(video.get('image') is not None for video in videos) and \
+            all(video.get('link') is not None for video in videos) and \
+            all(video.get('views') is not None for video in videos) and \
+            all(video.get('likes') is not None for video in videos) and \
+            all(video.get('tags') is not None for video in videos)
     # <-- End of test_get_video()
 
 # <-- End of TestHelpers
-
-
-if __name__ == "__main__":
-    unittest.main()
